@@ -1,0 +1,2 @@
+orig EXCEPT gold: 0
+gold EXCEPT orig: 0

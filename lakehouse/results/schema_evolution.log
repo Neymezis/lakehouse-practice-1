@@ -1,0 +1,12 @@
+ADD COLUMN
+RENAME COLUMN
+"name","varchar","",""
+"custkey","bigint","",""
+"orderkey","bigint","",""
+"orderdate","date","",""
+"totalprice","double","",""
+"qty_total","double","",""
+"note","varchar","",""
+"Customer#000128120","4722021","323.0",""
+"Customer#000144617","3043270","317.0",""
+"Customer#000013940","2232932","304.0",""

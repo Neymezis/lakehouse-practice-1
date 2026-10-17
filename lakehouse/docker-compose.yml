@@ -1,0 +1,77 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: lakehouse-pg
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: lakekeeper
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d lakekeeper"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+    mem_limit: 256m
+
+  minio:
+    image: bitnamilegacy/minio:latest
+    container_name: lakehouse-minio
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+      MINIO_DEFAULT_BUCKETS: lakehouse
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    mem_limit: 384m
+
+  lakekeeper-migrate:
+    image: quay.io/lakekeeper/catalog:latest-main
+    container_name: lakekeeper-migrate
+    command: ["migrate"]
+    environment: &lk_env
+      LAKEKEEPER__PG_ENCRYPTION_KEY: "local-dev-encryption-key"
+      LAKEKEEPER__PG_DATABASE_URL_READ: postgresql://postgres:postgres@postgres:5432/lakekeeper
+      LAKEKEEPER__PG_DATABASE_URL_WRITE: postgresql://postgres:postgres@postgres:5432/lakekeeper
+      RUST_LOG: info
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: "no"
+
+  lakekeeper:
+    image: quay.io/lakekeeper/catalog:latest-main
+    container_name: lakekeeper
+    command: ["serve"]
+    environment: *lk_env
+    depends_on:
+      lakekeeper-migrate:
+        condition: service_completed_successfully
+    ports:
+      - "8181:8181"
+    mem_limit: 256m
+
+  trino:
+    image: trinodb/trino:470
+    container_name: trino
+    depends_on:
+      - lakekeeper
+      - minio
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./trino/jvm.config:/etc/trino/jvm.config:ro
+      - ./trino/config.properties:/etc/trino/config.properties:ro
+      - ./trino/catalog:/etc/trino/catalog:ro
+    mem_limit: 2500m
+
+  metabase:
+    image: metabase/metabase:latest
+    container_name: metabase
+    depends_on:
+      - trino
+    environment:
+      JAVA_OPTS: "-Xmx900m"
+    ports:
+      - "3000:3000"
+    mem_limit: 1300m
