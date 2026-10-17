@@ -227,18 +227,23 @@ docker logs metabase 2>&1 | grep -i "initialization complete"   # проверк
 
 **Мои действия в интерфейсе.**
 
+
 1. Открыл `http://localhost:3000`, прошёл первичную настройку (локальная учётная запись), на шаге «Add your data» выбрал «добавлю данные позже».
+
 2. Admin settings → Databases → Add a database, тип **Starburst (Trino)**: Display name `Lakehouse`, Host `trino` (имя контейнера в Docker-сети, а не `localhost`), Port `8080`, Catalog `lakehouse`, Schema `bronze`, Username `admin`, пароль пустой, SSL выключен. Статус подключения: «Подключено».
 
 ![Подключение базы Lakehouse в Metabase](screenshots/01-connection.png)
+
 3. В обозревателе данных база Lakehouse показала три таблицы Bronze: `Customer`, `Lineitem`, `Orders`. Таблица `Orders` открылась с колонками `Orderkey`, `Custkey`, `Orderdate`, `Totalprice` (показаны первые 2000 строк, время ответа 268 мс).
 
 ![Таблицы схемы bronze](screenshots/02-tables.png)
 
 ![Таблица Orders](screenshots/03-orders.png)
+
 4. SQL-запрос `SELECT count(*) FROM bronze.lineitem` вернул **6 001 215**, что совпадает с числом строк Bronze из п. 4.
 
 ![Результат count(*) по lineitem](screenshots/04-count.png)
+
 5. SQL-запрос по годам:
 
 ```sql
